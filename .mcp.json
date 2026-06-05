@@ -1,6 +1,6 @@
 {
-  "mcpServers": {
-    "omatic-server": {
+  "mcp_servers": {
+    "omatic-server-connection": {
       "command": "node",
       "args": [
         "./server/index.js"

@@ -103,6 +103,124 @@ function successResponse(data = {}) {
   return jsonResponse({ success: true, ...data });
 }
 
+function asNumber(value, fallback = 0) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function plural(value, singular, pluralForm = `${singular}s`) {
+  return asNumber(value) === 1 ? singular : pluralForm;
+}
+
+function statusIcon(status) {
+  const normalized = String(status || "").toLowerCase();
+  if (["ok", "ready", "connected", "active"].includes(normalized)) return "OK";
+  if (["degraded", "warning", "warn"].includes(normalized)) return "WARN";
+  if (["unavailable", "blocked", "failed", "error"].includes(normalized)) return "FAIL";
+  return "INFO";
+}
+
+function queryRows(queryResult) {
+  return queryResult && queryResult.ok && Array.isArray(queryResult.rows)
+    ? queryResult.rows
+    : [];
+}
+
+function firstStartupSummary(startup) {
+  return queryRows(startup && startup.summary)[0] || {};
+}
+
+function formatCountMap(map) {
+  if (!map || typeof map !== "object") return "none";
+  const entries = Object.entries(map).filter(([, value]) => asNumber(value) > 0);
+  if (!entries.length) return "none";
+  return entries
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, value]) => `${key} ${value}`)
+    .join(" | ");
+}
+
+function formatStartupView(payload) {
+  const startup = payload.startup || {};
+  const summary = firstStartupSummary(startup);
+  const readiness = queryRows(startup.readiness);
+  const agreements = queryRows(startup.agreements);
+  const loadedSkills = Array.isArray(startup.loaded_skills) ? startup.loaded_skills : [];
+  const embeddingRows = queryRows(startup.embedding);
+  const governance = summary.governance_health || {};
+  const sopIndex = Array.isArray(summary.sop_index) ? summary.sop_index : [];
+  const p1Tasks = Array.isArray(summary.p1_tasks) ? summary.p1_tasks : [];
+  const session = payload.session || {};
+  const identity = payload.identity || {};
+  const factory = payload.factory || {};
+  const sessionId = session.id || summary.last_session_id || payload.session_id || "unknown";
+  const platform = session.platform || summary.platform || factory.platform_profile || "unknown";
+  const dbName = identity.db_name || "unknown-db";
+  const dbUser = identity.db_user || "unknown-user";
+  const openTaskTotal = summary.open_task_total || "0";
+  const readyAgreements = agreements.filter((row) => row.status_label === "READY").length;
+  const connectorOk = readiness.filter((row) => row.status_label === "OK").length;
+  const connectorTotal = readiness.length;
+  const staleEmbedding = embeddingRows.reduce((total, row) => total + asNumber(row.stale), 0);
+  const unembedded = embeddingRows.reduce((total, row) => total + asNumber(row.unembedded), 0);
+  const ruleCount = asNumber(governance.active_rule_count);
+  const ruleTarget = asNumber(governance.rule_count_target);
+  const combinedTarget = asNumber(governance.combined_governance_target);
+  const combinedCurrent = asNumber(governance.active_sop_count) + ruleCount;
+  const governanceLabel =
+    ruleTarget && ruleCount < ruleTarget
+      ? `WARN ${ruleCount}/${ruleTarget} rules`
+      : `OK ${ruleCount || "unknown"} rules`;
+  const combinedLabel =
+    combinedTarget && combinedCurrent < combinedTarget
+      ? `WARN ${combinedCurrent}/${combinedTarget} combined`
+      : `OK ${combinedCurrent || "unknown"} combined`;
+  const skillNames = loadedSkills.map((row) => row.agent_name).filter(Boolean);
+  const closedFactory = loadedSkills
+    .filter((row) => row.factory_mode === "always_on_closed_factory")
+    .map((row) => row.agent_name)
+    .filter(Boolean);
+  const optIn = loadedSkills
+    .filter((row) => row.factory_mode === "loaded_opt_in_lane")
+    .map((row) => row.agent_name)
+    .filter(Boolean);
+
+  const lines = [
+    "O-MATIC VANGUARD FACTORY",
+    `Session ${sessionId} | ${platform} | ${dbName} as ${dbUser}`,
+    "",
+    `Factory status: ${connectorOk === connectorTotal && connectorTotal > 0 ? "GREEN" : "CHECK"} | ${connectorOk}/${connectorTotal} ${plural(connectorTotal, "connector")} OK | ${readyAgreements}/${agreements.length} ${plural(agreements.length, "skill")} READY`,
+    `Workload: ${openTaskTotal} open ${plural(openTaskTotal, "task")} | ${formatCountMap(summary.open_tasks)}`,
+    `Brain: ${staleEmbedding === 0 && unembedded === 0 ? "clean" : "attention needed"} | stale ${staleEmbedding} | unembedded ${unembedded}`,
+    `Governance: ${governanceLabel} | ${combinedLabel} | ${sopIndex.length} active ${plural(sopIndex.length, "SOP")}`,
+    "",
+    "Roster",
+    `Closed factory: ${closedFactory.join(", ") || "none"}`,
+    `Opt-in lanes: ${optIn.join(", ") || "none"}`,
+    `Loaded order: ${skillNames.join(", ") || "none"}`,
+    "",
+    "Connector Readiness",
+    ...(readiness.length
+      ? readiness.map((row) => `${statusIcon(row.status_label)} ${row.connector_id}: ${row.status_label || row.probe_result || "unknown"}`)
+      : ["INFO no connector readiness rows returned"]),
+  ];
+
+  if (p1Tasks.length) {
+    lines.push("", "P1 Queue");
+    for (const task of p1Tasks.slice(0, 8)) {
+      lines.push(`#${task.id} ${task.owner || "unowned"} | ${task.category || "uncategorized"} | ${task.title}`);
+    }
+    if (p1Tasks.length > 8) lines.push(`...and ${p1Tasks.length - 8} more P1 ${plural(p1Tasks.length - 8, "task")}`);
+  }
+
+  const resumeNotes = summary.resume_notes || (payload.session && payload.session.resume_notes);
+  if (resumeNotes) {
+    lines.push("", `Resume: ${resumeNotes}`);
+  }
+
+  return lines.join("\n");
+}
+
 function isDestructiveSql(sql) {
   return /\b(drop|truncate|delete|update|insert|alter|create|grant|revoke|vacuum|reindex)\b/i.test(sql || "");
 }
@@ -585,7 +703,7 @@ async function handleStartup(connections, args, explicitConnection = null) {
     optionalQuery(connections, "SELECT * FROM public.v_agent_agreement ORDER BY agent_name", [], explicitConnection),
   ]);
 
-  return successResponse({
+  const payload = {
     factory: redactFactory(connections.project()),
     pinned_connection: explicitConnection,
     identity: verified.identity,
@@ -609,6 +727,11 @@ async function handleStartup(connections, args, explicitConnection = null) {
       skill_loading_contract:
         "All READY v_agent_agreement skills are startup-loaded. Closed-factory skills are always on for routing; opt-in critic/coach skills remain opt-in and do not self-activate.",
     },
+  };
+
+  return successResponse({
+    view: formatStartupView(payload),
+    ...payload,
   });
 }
 
@@ -708,7 +831,7 @@ async function handleStartupRun(connections, args, explicitConnection = null) {
 
   const startup = await handleStartup(connections, { session_id: sessionId }, explicitConnection);
   const startupPayload = JSON.parse(startup.content[0].text);
-  return successResponse({
+  const payload = {
     factory: redactFactory(project),
     pinned_connection: explicitConnection,
     identity: verified.identity,
@@ -719,6 +842,11 @@ async function handleStartupRun(connections, args, explicitConnection = null) {
       ? { ok: true, query: brainQuery, hits: brain.count }
       : { ok: false, query: brainQuery, error: brain.error },
     startup: startupPayload.startup,
+  };
+
+  return successResponse({
+    view: formatStartupView(payload),
+    ...payload,
   });
 }
 
@@ -757,7 +885,7 @@ async function handleSearchMemory(connections, args, explicitConnection = null) 
 
   const telemetry = await optionalQuery(
     connections,
-    `SELECT fn_record_retrieval_event($1, 'omatic_search_memory', false, $2::jsonb, $3, 'omatic-server-plugin', $4) AS event_id`,
+    `SELECT fn_record_retrieval_event($1, 'omatic_search_memory', false, $2::jsonb, $3, 'omatic-server-connection', $4) AS event_id`,
     [args.query, JSON.stringify(resultIds), Date.now() - startedAt, tenantId],
     explicitConnection
   );

@@ -1,15 +1,15 @@
-# O-Matic Server (Claude Code + Codex Plugin)
+# O-Matic Server Connection (Claude Code + Codex Plugin)
 
 Bundled PostgreSQL + pgvector MCP server for the O-Matic factory brain, packaged for Claude Code and OpenAI Codex. Install it once per host and let each factory project route through its own `.omatic/factory.json`. Ships Probot, Fred, and Data as plugin-bundled skills.
 
-**Version:** 1.3.2
+**Version:** 1.4.1
 **Author:** James Walker / O-Matic AI Research Lab
 
 ---
 
 ## What this is
 
-The O-Matic factory brain is a Postgres database with `pgvector` on the O-Matic Server. Agents reach it through an MCP server — `omatic-server` — that exposes factory tools plus raw SQL tools.
+The O-Matic factory brain is a Postgres database with `pgvector` on the O-Matic Server. Agents reach it through an MCP server — `omatic-server-connection` — that exposes factory tools plus raw SQL tools.
 
 Until now that MCP server was a hand-maintained entry in `claude_desktop_config.json`. This plugin packages the same server so it installs and updates like any other plugin. No JSON surgery on the desktop config.
 
@@ -20,17 +20,17 @@ The server code is shared. Claude Code and Codex differ only in their plugin man
 ## What's inside
 
 ```
-omatic-server/
+omatic-server-connection/
   .claude-plugin/
     plugin.json        # Claude plugin manifest (declares skills/)
   .codex-plugin/
     plugin.json        # Codex plugin manifest (declares skills/)
   .mcp.json            # Codex MCP server config
   skills/
-    omatic-server/SKILL.md         # generic plugin operating guide
-    orch-o-matic-probot/SKILL.md   # Probot v14 — orchestrator
-    data-o-matic-data/SKILL.md     # Data v4.0 — analyst + factory DBA
-    find-o-matic-fred/SKILL.md     # Fred v9.0 — storage + connection CRUD
+    omatic-server-connection/SKILL.md  # generic plugin operating guide
+    orch-o-matic-probot/SKILL.md   # Probot v14.1 — orchestrator
+    data-o-matic-data/SKILL.md     # Data v5.0 — analyst, architect + factory DBA
+    find-o-matic-fred/SKILL.md     # Fred v9.1 — storage + connection CRUD
   server/              # bundled Node MCP server
     index.js
     connections.js
@@ -69,15 +69,15 @@ One plugin install serves every factory project. The project you open decides wh
 ## Install In Claude Code
 
 1. In Claude Code, add this repository as a plugin marketplace: `lucid3ye/o-matic-server`.
-2. Install the **omatic-server** plugin from that marketplace.
+2. Install the **omatic-server-connection** plugin from that marketplace.
 3. Restart Claude Code.
-4. Approve the `omatic-server` MCP server on first launch when prompted.
+4. Approve the `omatic-server-connection` MCP server on first launch when prompted.
 5. **Remove the `omatic-server` block from `claude_desktop_config.json`** — the plugin replaces it. Leaving both means two processes competing for the same server name.
 
 ## Install In OpenAI Codex
 
 1. Add this repository as a Codex plugin marketplace.
-2. Install the **omatic-server** plugin.
+2. Install the **omatic-server-connection** plugin.
 3. Restart Codex so the plugin-managed MCP server is loaded.
 4. Open Codex from a factory project containing `.omatic/factory.json`, or use `omatic_add_connection` to create/update the project connection file.
 5. Verify with `omatic_resolve_factory`.
@@ -115,6 +115,16 @@ Expect `factory_file` pointing at your project's `.omatic/factory.json` and `act
 
 ## Changelog
 
+- **1.4.1** — Published to `lucidIT-LLC/o-matic-server-connection` (repo renamed from `o-matic-server-plugin`).
+  - **Renamed** `omatic-server` → `omatic-server-connection` across package id, MCP server registration, the generic skill, and marketplace. The plugin is the *connection*; `lucidIT-LLC/o-matic-server` is the DB image distro.
+  - **Strict project-root resolver retained** (rule 259, from 1.4.0 — "no walk-up / not stuck on the first DB"). Merged with the local improvements rather than overwritten.
+  - **Codex `.mcp.json` fix** — uses the spec `mcp_servers` key (was `mcpServers`; Codex silently failed to register the connector).
+  - **Kernel skills regenerated** from the persona gold records: Probot 14.1, Fred 9.1, Data 5.0 (friendly-android character) — each SKILL.md stamped with its `identity_signature`.
+  - Net: one plugin installs **skills + connector on both Claude Code and Codex**.
+- **1.3.4** — Codex connector fix + kernel skill regeneration.
+  - **`.mcp.json` now uses the Codex-spec `mcp_servers` key** (was `mcpServers`, the Claude convention). Per the OpenAI Codex plugin spec, `.mcp.json` accepts only a direct server map or a `mcp_servers` wrapper — with `mcpServers`, Codex silently failed to register the connector. Skills loaded; the connector did not.
+  - **Kernel skills regenerated from the persona gold records** (factory brain): Probot 14.1.0, Fred 9.1.0, Data 5.0.0 (character replacement — friendly affable android). Each SKILL.md header now carries its `identity_signature` for drift detection.
+  - Legacy `factory/closed-factory/` kernel duplicates retired; the DB gold record + this plugin are the canonical source + shipped export.
 - **1.3.2** — Multi-platform startup hardening.
   - Codex manifest now passes workspace-derived `OMATIC_PROJECT_ROOT` and `OMATIC_FACTORY_JSON_PATH` when host variables are available.
   - Claude Code manifest no longer hardcodes the O-Matic project path, database URL, or Cowork platform. It uses `${CLAUDE_PROJECT_DIR}` and `OMATIC_PLATFORM=claude-code`.

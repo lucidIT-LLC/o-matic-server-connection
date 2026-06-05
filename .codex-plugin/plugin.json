@@ -1,6 +1,6 @@
 {
-  "name": "omatic-server",
-  "version": "1.4.0",
+  "name": "omatic-server-connection",
+  "version": "1.4.1",
   "description": "O-Matic Server connection — bundled PostgreSQL + pgvector MCP server for OpenAI Codex. Ships Probot (orchestrator), Fred (storage + connection CRUD), and Data (analyst + DBA) skills.",
   "author": {
     "name": "James Walker",
@@ -20,7 +20,7 @@
   "skills": "./skills/",
   "mcpServers": "./.mcp.json",
   "interface": {
-    "displayName": "O-Matic Server",
+    "displayName": "O-Matic Server Connection",
     "shortDescription": "Connect Codex to an O-Matic factory brain.",
     "longDescription": "Bundles the O-Matic Server MCP layer for OpenAI Codex. It resolves a project-bound factory, reports startup and connector health, searches factory memory, manages task and decision records, and exposes guarded SQL against the configured PostgreSQL + pgvector factory brain.",
     "developerName": "O-Matic AI Research Lab",

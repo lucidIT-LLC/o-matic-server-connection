@@ -28,7 +28,7 @@ async function main() {
   }
 
   const server = new Server(
-    { name: "omatic-server-connection", version: "1.3.1" },
+    { name: "omatic-server-connection", version: "1.4.1" },
     { capabilities: { tools: { listChanged: true } } }
   );
 

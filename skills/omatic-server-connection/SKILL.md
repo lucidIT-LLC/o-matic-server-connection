@@ -1,5 +1,5 @@
 ---
-name: omatic-server
+name: omatic-server-connection
 description: Use when operating an O-Matic Server project through the Codex plugin, including factory startup, health checks, memory search, embedding status, task review, decision logging, connection setup, work claims, and guarded SQL.
 ---
 

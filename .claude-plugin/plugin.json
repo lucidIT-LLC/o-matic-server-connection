@@ -1,6 +1,6 @@
 {
-  "name": "omatic-server",
-  "version": "1.4.0",
+  "name": "omatic-server-connection",
+  "version": "1.4.1",
   "description": "O-Matic Server connection — bundled PostgreSQL + pgvector MCP server for the O-Matic factory brain. Ships Probot (orchestrator), Fred (storage + connection CRUD), and Data (analyst + DBA) skills. Replaces the hand-edited omatic-server block in claude_desktop_config.json.",
   "author": {
     "name": "James Walker",
@@ -10,7 +10,7 @@
   "keywords": ["omatic", "factory", "postgres", "pgvector", "mcp", "brain", "probot", "fred", "data"],
   "skills": "./skills/",
   "mcpServers": {
-    "omatic-server": {
+    "omatic-server-connection": {
       "command": "node",
       "args": ["${CLAUDE_PLUGIN_ROOT}/server/index.js"],
       "env": {
