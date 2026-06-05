@@ -1,5 +1,9 @@
-node_modules/
 *.log
 .DS_Store
 .env
 *.env
+
+# Ignore node_modules everywhere EXCEPT the vendored server runtime,
+# which must ship so the bundled MCP server starts without `npm install`.
+node_modules/
+!plugins/omatic-server-connection/server/node_modules/

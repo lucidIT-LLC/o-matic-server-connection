@@ -1,0 +1,20 @@
+{
+  "name": "omatic",
+  "owner": {
+    "name": "lucidIT-LLC",
+    "email": "lucideye@icloud.com"
+  },
+  "plugins": [
+    {
+      "name": "omatic-server-connection",
+      "source": "./plugins/omatic-server-connection",
+      "description": "O-Matic Server connection — bundled PostgreSQL + pgvector MCP server for the O-Matic factory brain. Ships Probot (orchestrator), Fred (storage + connection CRUD), and Data (analyst + DBA) skills.",
+      "author": {
+        "name": "James Walker",
+        "url": "https://o-matic.io"
+      },
+      "homepage": "https://o-matic.io",
+      "category": "Productivity"
+    }
+  ]
+}
