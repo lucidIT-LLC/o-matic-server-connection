@@ -119,19 +119,26 @@ function loadProjectContext(env = process.env) {
   // Cowork where the manifest var didn't expand) are treated as unset.
   const roots = candidateProjectRoots(env);
   const root = roots[0] || process.cwd();
-  // OMATIC_FACTORY_JSON_PATH (used by the Cowork .mcpb extension via
-  // user_config) points directly at a factory.json on disk. When set and the
-  // file exists, it short-circuits walk-up discovery — handy for Cowork where
-  // there is no project-root concept.
+  // Strict resolution (project-root only). Either an explicitly pinned path
+  // (OMATIC_FACTORY_JSON_PATH — used by the Cowork .mcpb extension), or
+  // <projectRoot>/.omatic/factory.json at one of the candidate roots. There is
+  // NO walk-up: discovery never climbs past the project into a parent or global
+  // .omatic/factory.json. This is the fix for the plugin latching onto the
+  // first/highest factory.json it finds ("stuck on the first database").
   const explicitFactoryPath = resolvedOrNull(env.OMATIC_FACTORY_JSON_PATH);
   const factoryFile =
     explicitFactoryPath && fs.existsSync(explicitFactoryPath)
       ? path.resolve(explicitFactoryPath)
-      : roots.map((candidate) => findUp(candidate, ".omatic/factory.json")).find(Boolean) || null;
+      : roots
+          .map((candidate) => path.join(candidate, ".omatic", "factory.json"))
+          .find((p) => fs.existsSync(p)) || null;
+  const projectRootForFiles = factoryFile ? path.dirname(path.dirname(factoryFile)) : null;
   const projectFile =
-    (factoryFile ? findUp(path.dirname(factoryFile), "_omatic/project.json") : null) ||
-    roots.map((candidate) => findUp(candidate, "_omatic/project.json")).find(Boolean) ||
-    null;
+    (projectRootForFiles && fs.existsSync(path.join(projectRootForFiles, "_omatic", "project.json"))
+      ? path.join(projectRootForFiles, "_omatic", "project.json")
+      : roots
+          .map((candidate) => path.join(candidate, "_omatic", "project.json"))
+          .find((p) => fs.existsSync(p))) || null;
   const factory = readJsonIfExists(factoryFile) || {};
   const project = readJsonIfExists(projectFile) || {};
   const identity = project.identity || {};
@@ -333,7 +340,11 @@ function resolveFactoryFilePath(env = process.env) {
   if (explicitPath) return path.resolve(explicitPath);
   const roots = candidateProjectRoots(env);
   const root = roots[0] || process.cwd();
-  const existing = roots.map((candidate) => findUp(candidate, ".omatic/factory.json")).find(Boolean);
+  // Strict: only a project-root .omatic/factory.json counts — no walk-up. A new
+  // connection is always written at the project root, never into a parent.
+  const existing = roots
+    .map((candidate) => path.join(candidate, ".omatic", "factory.json"))
+    .find((p) => fs.existsSync(p));
   if (existing) return existing;
   return path.join(root, ".omatic", "factory.json");
 }
@@ -429,8 +440,9 @@ function ensureFactoryJsonFromEnv(env = process.env) {
     ) {
       return { migrated: false, reason: `refusing to write factory.json into plugin install dir: ${root}` };
     }
-    const existing = findUp(root, ".omatic/factory.json");
-    if (existing) return { migrated: false, reason: `factory.json already present at ${existing}` };
+    // Strict: only a project-root factory.json blocks the migration — no walk-up.
+    const rootFactory = path.join(root, ".omatic", "factory.json");
+    if (fs.existsSync(rootFactory)) return { migrated: false, reason: `factory.json already present at ${rootFactory}` };
   }
 
   const parsed = parseDatabaseUrl(dsn, "omatic");

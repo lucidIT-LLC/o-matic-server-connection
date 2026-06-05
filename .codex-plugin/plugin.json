@@ -1,6 +1,6 @@
 {
   "name": "omatic-server",
-  "version": "1.3.3",
+  "version": "1.4.0",
   "description": "O-Matic Server connection — bundled PostgreSQL + pgvector MCP server for OpenAI Codex. Ships Probot (orchestrator), Fred (storage + connection CRUD), and Data (analyst + DBA) skills.",
   "author": {
     "name": "James Walker",
