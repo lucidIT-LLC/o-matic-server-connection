@@ -1,6 +1,6 @@
 {
   "name": "omatic-server-connection",
-  "version": "1.4.1",
+  "version": "2.0.0",
   "description": "O-Matic Server connection — bundled PostgreSQL + pgvector MCP server for the O-Matic factory brain. Ships Probot (orchestrator), Fred (storage + connection CRUD), and Data (analyst + DBA) skills. Replaces the hand-edited omatic-server block in claude_desktop_config.json.",
   "author": {
     "name": "James Walker",
