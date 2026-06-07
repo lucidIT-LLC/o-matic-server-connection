@@ -1,17 +1,21 @@
 # O-Matic Server Connection (Claude Code + Codex Plugin)
 
-Bundled PostgreSQL + pgvector MCP server for the O-Matic factory brain, packaged for Claude Code and OpenAI Codex. Install it once per host and let each factory project route through its own `.omatic/factory.json`. Ships Probot, Fred, and Data as plugin-bundled skills.
+> **What this is:** the plugin that connects Claude Code and Codex to an O-Matic Server, and ships the Probot, Fred, and Data skills.
+> **What this is NOT:** a database. It bundles no PostgreSQL and no pgvector — it's the wire and the crew, not the brain.
+> The brain it connects to lives in **[o-matic-server](https://github.com/lucidIT-LLC/o-matic-server)**.
 
-**Version:** 1.4.1
+The connection layer for an O-Matic factory, packaged for Claude Code and OpenAI Codex. Install it once per host and let each factory project route through its own `.omatic/factory.json` to the right O-Matic Server. Ships Probot, Fred, and Data as plugin-bundled skills.
+
+**Version:** 2.0.0
 **Author:** James Walker / O-Matic AI Research Lab
 
 ---
 
 ## What this is
 
-The O-Matic factory brain is a Postgres database with `pgvector` on the O-Matic Server. Agents reach it through an MCP server — `omatic-server-connection` — that exposes factory tools plus raw SQL tools.
+The factory brain — persistent memory, rules, tasks, decisions — lives in a separate Postgres + `pgvector` database: the **o-matic-server** image. This plugin doesn't contain that database. It's the MCP layer that *reaches* it: a bundled Node MCP server that resolves your project's factory, reports startup and connector health, searches factory memory, manages task and decision records, and exposes guarded SQL against the connected brain.
 
-Until now that MCP server was a hand-maintained entry in `claude_desktop_config.json`. This plugin packages the same server so it installs and updates like any other plugin. No JSON surgery on the desktop config.
+Until now that MCP server was a hand-maintained entry in `claude_desktop_config.json`. This plugin packages it so it installs and updates like any other plugin. No JSON surgery on the desktop config.
 
 The server code is shared. Claude Code and Codex differ only in their plugin manifests and host bootstrap metadata.
 

@@ -8,7 +8,7 @@
     {
       "name": "omatic-server-connection",
       "source": "./plugins/omatic-server-connection",
-      "description": "O-Matic Server connection — bundled PostgreSQL + pgvector MCP server for the O-Matic factory brain. Ships Probot (orchestrator), Fred (storage + connection CRUD), and Data (analyst + DBA) skills.",
+      "description": "O-Matic Server connection — the MCP plugin that connects Claude Code and Codex to an O-Matic Server and ships Probot (orchestrator), Fred (storage + connection CRUD), and Data (analyst + DBA) skills. Connects to the factory brain; does not bundle a database.",
       "author": {
         "name": "James Walker",
         "url": "https://o-matic.io"
