@@ -1157,8 +1157,10 @@ async function handleReleaseWork(connections, args, explicitConnection = null) {
   const project = connections.project();
   const result = await q(
     connections,
-    `DELETE FROM work_claims
-     WHERE factory_id = $1 AND resource_type = $2 AND resource_id = $3 AND claimed_by = $4
+    `UPDATE work_claims
+        SET status = 'released', released_at = NOW(), released_by = $4
+      WHERE factory_id = $1 AND resource_type = $2 AND resource_id = $3 AND claimed_by = $4
+        AND status = 'active'
      RETURNING *`,
     [project.factory_id, args.resource_type, args.resource_id, args.claimed_by],
     explicitConnection
