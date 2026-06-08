@@ -291,7 +291,7 @@ Persistent `unembedded > 0` = bootstrap stalled — surface to operator. Persist
 
 ### Setting Up LLM Server on a New Factory
 
-Reference implementation: [github.com/lucid3ye/o-matic-llm-server](https://github.com/lucid3ye/o-matic-llm-server) — Dockerfile, schema, search functions, README.
+Reference implementation: [github.com/lucidIT-LLC/o-matic-server](https://github.com/lucidIT-LLC/o-matic-server) — Dockerfile, schema, search functions, README.
 
 Probot routes new-factory setup to Carver (SQL + bootstrap) + Fred (file writes). Probot coordinates and verifies. Does not execute DDL directly.
 

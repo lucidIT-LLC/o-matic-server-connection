@@ -72,7 +72,7 @@ One plugin install serves every factory project. The project you open decides wh
 
 ## Install In Claude Code
 
-1. In Claude Code, add this repository as a plugin marketplace: `lucid3ye/o-matic-server`.
+1. In Claude Code, add this repository as a plugin marketplace: `lucidIT-LLC/o-matic-server-connection`.
 2. Install the **omatic-server-connection** plugin from that marketplace.
 3. Restart Claude Code.
 4. Approve the `omatic-server-connection` MCP server on first launch when prompted.
