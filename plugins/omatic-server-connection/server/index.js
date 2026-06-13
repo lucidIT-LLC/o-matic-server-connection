@@ -11,7 +11,14 @@ const {
   loadConnections,
   ensureFactoryJsonFromEnv,
 } = require("./connections.js");
-const { buildToolList, handleToolCall, setNotifyToolsChanged } = require("./tools.js");
+const {
+  buildServerInstructions,
+  buildToolList,
+  handleToolCall,
+  setNotifyToolsChanged,
+} = require("./tools.js");
+
+const PLUGIN_VERSION = "2.1.0";
 
 async function main() {
   // A9 — upgrade migration: write factory.json from legacy hardcoded DSN if
@@ -28,8 +35,11 @@ async function main() {
   }
 
   const server = new Server(
-    { name: "omatic-server-connection", version: "1.4.1" },
-    { capabilities: { tools: { listChanged: true } } }
+    { name: "omatic-server-connection", version: PLUGIN_VERSION },
+    {
+      capabilities: { tools: { listChanged: true } },
+      instructions: buildServerInstructions(),
+    }
   );
 
   server.setRequestHandler(ListToolsRequestSchema, async () => ({

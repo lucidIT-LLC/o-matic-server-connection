@@ -91,7 +91,7 @@ function candidateProjectRoots(env = process.env) {
     process.cwd(),
   ];
   const seen = new Set();
-  return values
+  const roots = values
     .map(resolvedOrNull)
     .filter(Boolean)
     .map((value) => path.resolve(value))
@@ -100,6 +100,8 @@ function candidateProjectRoots(env = process.env) {
       seen.add(value);
       return true;
     });
+  const projectRoots = roots.filter((value) => !isPluginInstallPath(value));
+  return projectRoots.length > 0 ? projectRoots : roots;
 }
 
 // Some plugin runtimes (Cowork .mcpb, certain Codex installs) do NOT expand

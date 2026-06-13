@@ -15,7 +15,7 @@ This repo is a **plugin marketplace** that works on both surfaces.
 **Claude Code**
 ```
 /plugin marketplace add lucidIT-LLC/o-matic-server-connection
-/plugin install omatic-server-connection@omatic
+/plugin install omatic-server-connection@lucidIT-LLC
 ```
 
 **OpenAI Codex**

@@ -1,15 +1,31 @@
-# O-Matic Server Connection (Claude Code + Codex Plugin)
+# O-Matic Server Connection (MCP Plugin + Bundled Skills)
 
 > **What this is:** the plugin that connects Claude Code and Codex to an O-Matic Server, and ships the Probot, Fred, and Data skills.
 > **What this is NOT:** a database. It bundles no PostgreSQL and no pgvector — it's the wire and the crew, not the brain.
 > The brain it connects to lives in **[o-matic-server](https://github.com/lucidIT-LLC/o-matic-server)**.
 
-The connection layer for an O-Matic factory, packaged for Claude Code and OpenAI Codex. Install it once per host and let each factory project route through its own `.omatic/factory.json` to the right O-Matic Server. Ships Probot, Fred, and Data as plugin-bundled skills.
+The connection layer for an O-Matic factory, packaged for MCP-capable hosts such as Claude Code and OpenAI Codex. Install it once per host and let each factory project route through its own `.omatic/factory.json` to the right O-Matic Server. Ships Probot, Fred, and Data as plugin-bundled skills.
 
-**Version:** 2.0.0
+**Version:** 2.1.0
 **Author:** James Walker / O-Matic AI Research Lab
 
 ---
+
+## Compatibility model
+
+This package has two layers:
+
+- **MCP tool layer** — `server/index.js` connects to the factory database and exposes O-Matic tools. This requires an MCP-capable host such as Codex, Claude Code, or a desktop host configured to launch the server over stdio.
+- **Skill prompt layer** — `skills/*/SKILL.md` files are canonical prompt contracts. They can be used in Google/Gemini, Ollama, or any generic model host, but those hosts do not get factory DB tools unless an external MCP/tool bridge is provided.
+
+`agent-pack.json` documents the host-neutral package model. Adapter notes live in `adapters/`.
+
+Helper scripts:
+
+```bash
+node scripts/print-system-prompt.mjs probot
+node scripts/build-ollama-modelfile.mjs probot llama3.1:8b > Probot.Modelfile
+```
 
 ## What this is
 
@@ -42,6 +58,9 @@ omatic-server-connection/
     package.json
     package-lock.json
     node_modules/       # runtime deps (pg, @modelcontextprotocol/sdk)
+  agent-pack.json       # Host-neutral compatibility manifest
+  adapters/             # Host-specific notes
+  scripts/              # Prompt/Modelfile helpers for prompt-only hosts
   README.md
 ```
 
@@ -94,16 +113,46 @@ Fresh machines: run `npm install` once inside `server/` if `node_modules/` is ab
 
 | Tool | Purpose |
 |---|---|
+| `omatic_usage_guide` | Connector-native instructions for LLM hosts: startup flow, factory resolution, per-platform packaging, pgvector retrieval, and SQL safety |
 | `omatic_factory_startup` / `omatic_factory_health_check` | Startup surface, readiness, embedding health |
 | `omatic_factory_startup_run` | Side-effecting startup runner: opens a platform session, seeds readiness, records built-in probes, warms retrieval, and returns scoped startup |
-| `omatic_search_memory` | FTS-backed factory memory search |
-| `omatic_embedding_status` | Reports embedding config, vector extensions, indexes, and plugin embedding certainty |
+| `omatic_search_memory` | Factory memory search. `mode=auto` uses generated or caller-supplied query embeddings for pgvector hybrid retrieval and falls back to FTS when no vector is available |
+| `omatic_embedding_status` | Reports redacted embedding config, vector extension status, HNSW/GIN indexes, search functions, and query-embedding readiness |
 | `omatic_list_tasks` / `omatic_record_decision` / `omatic_record_session_event` / `omatic_record_probe_result` | Factory state writes |
 | `omatic_resolve_factory` | Reports the active factory and resolved `factory_file` path |
 | `omatic_claim_work` / `omatic_release_work` | Advisory work claims (if installed) |
 | `omatic_execute_sql` | Guarded SQL — `confirm_destructive=true` required for DDL/DML |
 | `o-matic-server-{factory}:execute_sql` | Raw SQL, modern name |
 | `postgres-cabinet-{factory}:execute_sql` | Raw SQL, legacy alias — retained for backward compatibility |
+
+## LLM Usage Guidance
+
+The connector now teaches MCP hosts how to use it through server initialization
+instructions and a first-class guide tool:
+
+```text
+omatic_usage_guide
+```
+
+Agents should call `omatic_usage_guide` at the start of a new project/thread,
+then `omatic_resolve_factory` before DB work. For startup, use
+`omatic_factory_startup_run`. For memory retrieval, use
+`omatic_search_memory` with `mode=auto` unless strict behavior is needed.
+
+`omatic_search_memory` supports:
+
+- `mode=auto` — generate a query embedding when credentials are available,
+  pass it into `fn_search_semantic` / `fn_search_documents`, and fall back to
+  FTS with `NULL::vector` otherwise.
+- `mode=hybrid` — require pgvector hybrid retrieval; fail clearly if no query
+  vector can be produced.
+- `mode=fts` — intentionally use FTS fallback.
+- `embedding_vector` — caller-supplied vector for hosts that already provide
+  embeddings.
+
+Embedding credentials are read from `OPENAI_API_KEY`,
+`OMATIC_OPENAI_API_KEY`, or DB-owned `factory_config` embedding rows. Status
+output redacts secret-looking values.
 
 ---
 
@@ -119,6 +168,15 @@ Expect `factory_file` pointing at your project's `.omatic/factory.json` and `act
 
 ## Changelog
 
+- **2.1.0** — connector-native usage guidance and pgvector hybrid retrieval.
+  - Added MCP server initialization instructions and `omatic_usage_guide` so LLM hosts know startup, factory resolution, retrieval, and SQL safety flows before picking tools.
+  - `omatic_search_memory` now supports `mode=auto|hybrid|fts`, generated OpenAI-compatible query embeddings, caller-supplied vectors, and pgvector hybrid calls into `fn_search_semantic` / `fn_search_documents`.
+  - `omatic_embedding_status` now redacts secret-looking config values and reports pgvector extension, HNSW, and GIN readiness explicitly.
+  - Bumped marketplace, Claude, Codex, runtime, package, and agent-pack versions to `2.1.0` so plugin hosts see a real update.
+- **2.0.0** — lucidIT LLC marketplace cutover and universal compatibility metadata.
+  - Marketplace name standardized to `lucidIT-LLC`.
+  - Added `agent-pack.json`, adapter docs, and prompt/Modelfile helpers for prompt-only hosts.
+  - Server package metadata and MCP runtime identity aligned to plugin version `2.0.0`.
 - **1.4.1** — Published to `lucidIT-LLC/o-matic-server-connection` (repo renamed from `o-matic-server-plugin`).
   - **Renamed** `omatic-server` → `omatic-server-connection` across package id, MCP server registration, the generic skill, and marketplace. The plugin is the *connection*; `lucidIT-LLC/o-matic-server` is the DB image distro.
   - **Strict project-root resolver retained** (rule 259, from 1.4.0 — "no walk-up / not stuck on the first DB"). Merged with the local improvements rather than overwritten.
@@ -128,7 +186,7 @@ Expect `factory_file` pointing at your project's `.omatic/factory.json` and `act
 - **1.3.4** — Codex connector fix + kernel skill regeneration.
   - **`.mcp.json` now uses the Codex-spec `mcp_servers` key** (was `mcpServers`, the Claude convention). Per the OpenAI Codex plugin spec, `.mcp.json` accepts only a direct server map or a `mcp_servers` wrapper — with `mcpServers`, Codex silently failed to register the connector. Skills loaded; the connector did not.
   - **Kernel skills regenerated from the persona gold records** (factory brain): Probot 14.1.0, Fred 9.1.0, Data 5.0.0 (character replacement — friendly affable android). Each SKILL.md header now carries its `identity_signature` for drift detection.
-  - Legacy `factory/closed-factory/` kernel duplicates retired; the DB gold record + this plugin are the canonical source + shipped export.
+  - Legacy physical kernel duplicates retired; the DB gold record plus installed plugin skills are the canonical source and shipped export.
 - **1.3.2** — Multi-platform startup hardening.
   - Codex manifest now passes workspace-derived `OMATIC_PROJECT_ROOT` and `OMATIC_FACTORY_JSON_PATH` when host variables are available.
   - Claude Code manifest no longer hardcodes the O-Matic project path, database URL, or Cowork platform. It uses `${CLAUDE_PROJECT_DIR}` and `OMATIC_PLATFORM=claude-code`.

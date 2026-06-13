@@ -1,11 +1,12 @@
 {
-  "name": "omatic",
+  "name": "lucidIT-LLC",
   "interface": {
-    "displayName": "O-Matic Server"
+    "displayName": "lucidIT LLC"
   },
   "plugins": [
     {
       "name": "omatic-server-connection",
+      "version": "2.1.0",
       "source": {
         "source": "local",
         "path": "./plugins/omatic-server-connection"
