@@ -7,7 +7,7 @@
   "plugins": [
     {
       "name": "omatic-server-connection",
-      "version": "2.1.0",
+      "version": "2.1.1",
       "source": "./plugins/omatic-server-connection",
       "description": "O-Matic Server connection — the MCP plugin that connects Claude Code and Codex to an O-Matic Server and ships Probot (orchestrator), Fred (storage + connection CRUD), and Data (analyst + DBA) skills. Connects to the factory brain; does not bundle a database.",
       "author": {
@@ -15,7 +15,17 @@
         "url": "https://o-matic.io"
       },
       "homepage": "https://o-matic.io",
-      "category": "Productivity"
+      "category": "Productivity",
+      "release": {
+        "channel": "stable",
+        "tags": [
+          "stable"
+        ],
+        "latest": true
+      },
+      "tags": [
+        "stable"
+      ]
     }
   ]
 }

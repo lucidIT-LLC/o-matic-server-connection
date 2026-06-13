@@ -6,7 +6,7 @@
   "plugins": [
     {
       "name": "omatic-server-connection",
-      "version": "2.1.0",
+      "version": "2.1.1",
       "source": {
         "source": "local",
         "path": "./plugins/omatic-server-connection"
@@ -18,7 +18,17 @@
       "interface": {
         "displayName": "O-Matic Server Connection"
       },
-      "category": "Productivity"
+      "category": "Productivity",
+      "release": {
+        "channel": "stable",
+        "tags": [
+          "stable"
+        ],
+        "latest": true
+      },
+      "tags": [
+        "stable"
+      ]
     }
   ]
 }

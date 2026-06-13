@@ -6,7 +6,7 @@
 
 The connection layer for an O-Matic factory, packaged for MCP-capable hosts such as Claude Code and OpenAI Codex. Install it once per host and let each factory project route through its own `.omatic/factory.json` to the right O-Matic Server. Ships Probot, Fred, and Data as plugin-bundled skills.
 
-**Version:** 2.1.0
+**Version:** 2.1.1
 **Author:** James Walker / O-Matic AI Research Lab
 
 ---
@@ -25,7 +25,14 @@ Helper scripts:
 ```bash
 node scripts/print-system-prompt.mjs probot
 node scripts/build-ollama-modelfile.mjs probot llama3.1:8b > Probot.Modelfile
+node scripts/sync-bundled-skills.mjs --dry-run
+node scripts/sync-bundled-skills.mjs
 ```
+
+`sync-bundled-skills.mjs` installs missing bundled skills into
+`${CODEX_HOME:-~/.codex}/skills`, updates older installed copies, and skips
+installed skills that are already the same version or newer. It also detects
+current/newer copies already installed through the Codex plugin cache.
 
 ## What this is
 
@@ -168,6 +175,9 @@ Expect `factory_file` pointing at your project's `.omatic/factory.json` and `act
 
 ## Changelog
 
+- **2.1.1** — version-aware bundled skill sync.
+  - Added `scripts/sync-bundled-skills.mjs` so bundled plugin skills install only when missing or older and skip installed current/newer versions.
+  - Bumped marketplace, Claude, Codex, runtime, package, and agent-pack versions to `2.1.1`.
 - **2.1.0** — connector-native usage guidance and pgvector hybrid retrieval.
   - Added MCP server initialization instructions and `omatic_usage_guide` so LLM hosts know startup, factory resolution, retrieval, and SQL safety flows before picking tools.
   - `omatic_search_memory` now supports `mode=auto|hybrid|fts`, generated OpenAI-compatible query embeddings, caller-supplied vectors, and pgvector hybrid calls into `fn_search_semantic` / `fn_search_documents`.
