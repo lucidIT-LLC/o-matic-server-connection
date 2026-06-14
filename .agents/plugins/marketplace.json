@@ -1,7 +1,7 @@
 {
-  "name": "lucidIT-LLC",
+  "name": "omatic-server-connection",
   "interface": {
-    "displayName": "lucidIT LLC"
+    "displayName": "O-Matic Server Connection"
   },
   "plugins": [
     {
